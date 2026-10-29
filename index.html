@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif 30 Soal: Jajar Genjang & Trapesium - SD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Font Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-indigo-50/60 text-slate-800 min-h-screen flex flex-col justify-between" x-data="quizApp()">
+
+    <!-- Header / Navbar Top -->
+    <header class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-2 rounded-2xl shadow-md">
+                    <span class="text-2xl">📝</span>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold">Kuis Matematika SD: Jajar Genjang & Trapesium</h1>
+                    <p class="text-xs text-indigo-200">30 Soal Luas & Menentukan Sisi Hilang</p>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm font-bold">
+                <div class="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/30">
+                    Dijawab: <span x-text="answeredCount"></span>/30
+                </div>
+                <div class="bg-emerald-500 text-white px-3 py-1.5 rounded-xl shadow">
+                    Skor: <span x-text="totalScore"></span>
+                </div>
+                <button @click="resetProgress()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl transition text-xs shadow">
+                    🔄 Reset Kuis
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Container Utama Kuis -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- KIRI: Area Soal & Pilihan (lg:col-span-8) -->
+        <section class="lg:col-span-8 space-y-6">
+            
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-4 border-indigo-100 relative">
+                
+                <!-- Badge Nomor & Kategori -->
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                    <span class="bg-indigo-600 text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-full">
+                        Soal Nomor <span x-text="currentIndex + 1"></span> dari 30
+                    </span>
+                    <span :class="currentQuestion.type === 'jajar' ? 'bg-sky-100 text-sky-700' : 'bg-purple-100 text-purple-700'" class="text-xs font-bold px-3 py-1 rounded-full">
+                        <span x-text="currentQuestion.type === 'jajar' ? '📐 Jajar Genjang' : '⏢ Trapesium'"></span>
+                    </span>
+                </div>
+
+                <!-- Teks Soal -->
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-4" x-text="currentQuestion.question"></h3>
+
+                <!-- Ilustrasi Bangun Datar Interaktif (Menggunakan SVG Tanpa Membocorkan Nilai) -->
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 mb-6 flex justify-center items-center min-h-[160px]">
+                    
+                    <!-- SVG Jajar Genjang -->
+                    <template x-if="currentQuestion.type === 'jajar'">
+                        <svg width="220" height="130" viewBox="0 0 220 130" class="drop-shadow-sm">
+                            <polygon points="40,100 190,100 150,30 0,30" fill="#bae6fd" stroke="#0284c7" stroke-width="3" stroke-linejoin="round"/>
+                            <line x1="40" y1="30" x2="40" y2="100" stroke="#db2777" stroke-width="2" stroke-dasharray="4,4"/>
+                            <rect x="40" y="88" width="12" height="12" fill="none" stroke="#db2777" stroke-width="1.5"/>
+                            <text x="25" y="70" fill="#db2777" font-weight="bold" font-size="12">tinggi</text>
+                            <text x="100" y="118" fill="#0284c7" font-weight="bold" font-size="12">alas</text>
+                        </svg>
+                    </template>
+
+                    <!-- SVG Trapesium dengan Variasi Bentuk -->
+                    <template x-if="currentQuestion.type === 'trapesium'">
+                        <div>
+                            <!-- 1. Trapesium Siku-siku -->
+                            <template x-if="currentQuestion.trapShape === 'siku'">
+                                <svg width="220" height="130" viewBox="0 0 220 130" class="drop-shadow-sm">
+                                    <polygon points="40,30 160,30 200,105 40,105" fill="#e9d5ff" stroke="#9333ea" stroke-width="3" stroke-linejoin="round"/>
+                                    <!-- Garis tinggi berimpit dengan sisi tegak -->
+                                    <line x1="40" y1="30" x2="40" y2="105" stroke="#db2777" stroke-width="2.5" stroke-dasharray="4,4"/>
+                                    <rect x="40" y="93" width="12" height="12" fill="none" stroke="#db2777" stroke-width="1.5"/>
+                                    <text x="10" y="70" fill="#db2777" font-weight="bold" font-size="12">tinggi</text>
+                                    <text x="80" y="20" fill="#0284c7" font-weight="bold" font-size="12">sisi atas (a)</text>
+                                    <text x="100" y="122" fill="#9333ea" font-weight="bold" font-size="12">sisi bawah (b)</text>
+                                </svg>
+                            </template>
+
+                            <!-- 2. Trapesium Terbalik (Sisi atas lebih panjang dari bawah) -->
+                            <template x-if="currentQuestion.trapShape === 'terbalik'">
+                                <svg width="220" height="130" viewBox="0 0 220 130" class="drop-shadow-sm">
+                                    <polygon points="20,30 200,30 160,105 60,105" fill="#fbcfe8" stroke="#db2777" stroke-width="3" stroke-linejoin="round"/>
+                                    <line x1="60" y1="30" x2="60" y2="105" stroke="#0284c7" stroke-width="2" stroke-dasharray="4,4"/>
+                                    <rect x="60" y="93" width="12" height="12" fill="none" stroke="#0284c7" stroke-width="1.5"/>
+                                    <text x="45" y="70" fill="#0284c7" font-weight="bold" font-size="12">tinggi</text>
+                                    <text x="90" y="20" fill="#db2777" font-weight="bold" font-size="12">sisi atas (a)</text>
+                                    <text x="85" y="122" fill="#9333ea" font-weight="bold" font-size="12">sisi bawah (b)</text>
+                                </svg>
+                            </template>
+
+                            <!-- 3. Trapesium Sama Kaki / Atas Lebih Kecil (Default) -->
+                            <template x-if="!currentQuestion.trapShape || currentQuestion.trapShape === 'normal'">
+                                <svg width="220" height="130" viewBox="0 0 220 130" class="drop-shadow-sm">
+                                    <polygon points="50,105 180,105 200,30 20,30" fill="#e9d5ff" stroke="#9333ea" stroke-width="3" stroke-linejoin="round"/>
+                                    <line x1="50" y1="30" x2="50" y2="105" stroke="#db2777" stroke-width="2" stroke-dasharray="4,4"/>
+                                    <rect x="50" y="93" width="12" height="12" fill="none" stroke="#db2777" stroke-width="1.5"/>
+                                    <text x="35" y="70" fill="#db2777" font-weight="bold" font-size="12">tinggi</text>
+                                    <text x="95" y="20" fill="#0284c7" font-weight="bold" font-size="12">sisi atas (a)</text>
+                                    <text x="90" y="122" fill="#9333ea" font-weight="bold" font-size="12">sisi bawah (b)</text>
+                                </svg>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Pilihan Jawaban -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <template x-for="(opt, idx) in currentQuestion.options" :key="idx">
+                        <button 
+                            @click="selectAnswer(idx)"
+                            :disabled="isCurrentAnswered"
+                            :class="getOptionClass(idx)"
+                            class="p-4 rounded-xl border-2 text-left font-semibold text-sm sm:text-base transition-all flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-7 h-7 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0" x-text="['A','B','C','D'][idx]"></span>
+                                <span x-text="opt"></span>
+                            </div>
+                            <span x-show="isCurrentAnswered && idx === currentQuestion.correct" class="text-emerald-600 font-bold text-lg">✓</span>
+                            <span x-show="isCurrentAnswered && userAnswers[currentIndex] === idx && idx !== currentQuestion.correct" class="text-rose-600 font-bold text-lg">✕</span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Kotak Umpan Balik & Pembahasan (Langsung Muncul saat Dijawab) -->
+                <div x-show="isCurrentAnswered" x-transition class="p-4 rounded-2xl border-2 mb-6"
+                     :class="userAnswers[currentIndex] === currentQuestion.correct ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xl" x-text="userAnswers[currentIndex] === currentQuestion.correct ? '🎉' : '❌'"></span>
+                        <h4 class="font-bold text-sm sm:text-base" 
+                            :class="userAnswers[currentIndex] === currentQuestion.correct ? 'text-emerald-800' : 'text-rose-800'"
+                            x-text="userAnswers[currentIndex] === currentQuestion.correct ? 'Jawaban Kamu Benar!' : 'Jawaban Kurang Tepat!'">
+                        </h4>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-700 italic" x-text="currentQuestion.explanation"></p>
+                </div>
+
+                <!-- Tombol Navigasi Bawah -->
+                <div class="flex justify-between items-center pt-2">
+                    <button 
+                        @click="prevQuestion()" 
+                        :disabled="currentIndex === 0"
+                        class="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm disabled:opacity-50 transition">
+                        ← Sebelumnya
+                    </button>
+                    <button 
+                        @click="nextQuestion()" 
+                        :disabled="currentIndex === questions.length - 1"
+                        class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm disabled:opacity-50 transition">
+                        Selanjutnya →
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- KANAN: Navigasi Nomor Soal Grid & Ringkasan (lg:col-span-4) -->
+        <section class="lg:col-span-4 space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border-4 border-indigo-100">
+                <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center justify-between">
+                    <span>🧭 Navigasi Soal</span>
+                    <span class="text-xs text-indigo-600 font-normal">Klik nomor untuk pindah</span>
+                </h3>
+
+                <!-- Grid 30 Nomor -->
+                <div class="grid grid-cols-5 gap-2 mb-6">
+                    <template x-for="(q, index) in questions" :key="index">
+                        <button 
+                            @click="currentIndex = index"
+                            :class="getGridButtonClass(index)"
+                            class="h-10 rounded-xl font-bold text-xs flex items-center justify-center transition transform hover:scale-105">
+                            <span x-text="index + 1"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Keterangan Warna Grid -->
+                <div class="space-y-2 text-xs border-t border-slate-100 pt-4 text-slate-600">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-emerald-500"></div>
+                        <span>Jawaban Benar</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-rose-500"></div>
+                        <span>Jawaban Salah</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-indigo-600"></div>
+                        <span>Soal Sedang Dibuka</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-slate-200"></div>
+                        <span>Belum Dijawab</span>
+                    </div>
+                </div>
+
+                <!-- Info Penyimpanan Otomatis -->
+                <div class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2">
+                    <span>💾</span>
+                    <p>Status kuis tersimpan otomatis di perangkatmu. Boleh direfresh kapan saja!</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-slate-500 text-xs mt-8">
+        <p>✨ Kuis Matematika SD Interaktif - Soal Luas & Menentukan Sisi Hilang ✨</p>
+    </footer>
+
+    <!-- Alpine.js Application Logic -->
+    <script>
+        function quizApp() {
+            return {
+                currentIndex: 0,
+                userAnswers: {},
+
+                // 30 Bank Soal Terstruktur dengan Variasi Bentuk Trapesium
+                questions: [
+                    // 1
+                    {
+                        type: 'jajar',
+                        question: '1. Sebuah jajar genjang memiliki panjang alas 12 cm dan tinggi 8 cm. Berapakah luas jajar genjang tersebut?',
+                        options: ['80 cm²', '96 cm²', '40 cm²', '100 cm²'],
+                        correct: 1, // B
+                        explanation: 'Luas Jajar Genjang = Alas × Tinggi = 12 cm × 8 cm = 96 cm².'
+                    },
+                    // 2
+                    {
+                        type: 'jajar',
+                        question: '2. Diketahui luas sebuah jajar genjang adalah 150 cm² dan panjang alasnya 15 cm. Berapakah tinggi jajar genjang tersebut?',
+                        options: ['10 cm', '12 cm', '15 cm', '8 cm'],
+                        correct: 0, // A
+                        explanation: 'Tinggi = Luas ÷ Alas = 150 ÷ 15 = 10 cm.'
+                    },
+                    // 3
+                    {
+                        type: 'jajar',
+                        question: '3. Sebuah jajar genjang mempunyai luas 180 cm² dan tinggi 12 cm. Berapakah panjang alasnya?',
+                        options: ['12 cm', '18 cm', '15 cm', '20 cm'],
+                        correct: 2, // C
+                        explanation: 'Alas = Luas ÷ Tinggi = 180 ÷ 12 = 15 cm.'
+                    },
+                    // 4
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '4. Sebuah trapesium siku-siku memiliki panjang sisi sejajar 10 cm dan 14 cm, serta tinggi 8 cm. Berapakah luas trapesium tersebut?',
+                        options: ['192 cm²', '80 cm²', '96 cm²', '120 cm²'],
+                        correct: 2, // C
+                        explanation: 'Jumlah Sisi Sejajar = 10 + 14 = 24 cm. Luas = ½ × 24 × 8 = 96 cm².'
+                    },
+                    // 5
+                    {
+                        type: 'trapesium',
+                        trapShape: 'normal',
+                        question: '5. Luas sebuah trapesium adalah 120 cm². Jika jumlah panjang sisi sejajarnya adalah 24 cm, berapakah tinggi trapesium?',
+                        options: ['12 cm', '8 cm', '15 cm', '10 cm'],
+                        correct: 3, // D
+                        explanation: 'Tinggi = (2 × Luas) ÷ (Jumlah Sisi Sejajar) = (2 × 120) ÷ 24 = 240 ÷ 24 = 10 cm.'
+                    },
+                    // 6
+                    {
+                        type: 'jajar',
+                        question: '6. Suatu papan reklame berbentuk jajar genjang memiliki alas 20 cm dan tinggi 14 cm. Berapakah luas papan tersebut?',
+                        options: ['280 cm²', '140 cm²', '300 cm²', '240 cm²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 20 × 14 = 280 cm².'
+                    },
+                    // 7
+                    {
+                        type: 'trapesium',
+                        trapShape: 'terbalik',
+                        question: '7. Trapesium mempunyai luas 150 cm² dan tinggi 10 cm. Berapakah jumlah panjang kedua sisi sejajarnya?',
+                        options: ['25 cm', '30 cm', '15 cm', '35 cm'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = (2 × Luas) ÷ Tinggi = (2 × 150) ÷ 10 = 300 ÷ 10 = 30 cm.'
+                    },
+                    // 8
+                    {
+                        type: 'jajar',
+                        question: '8. Jika jajar genjang memiliki luas 210 cm² dan tingginya 14 cm, berapakah panjang alasnya?',
+                        options: ['14 cm', '16 cm', '15 cm', '18 cm'],
+                        correct: 2, // C
+                        explanation: 'Alas = Luas ÷ Tinggi = 210 ÷ 14 = 15 cm.'
+                    },
+                    // 9
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '9. Sisi sejajar sebuah trapesium siku-siku adalah 8 cm dan 12 cm, sedangkan tingginya 6 cm. Luas trapesium tersebut adalah...',
+                        options: ['120 cm²', '60 cm²', '48 cm²', '80 cm²'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = 8 + 12 = 20 cm. Luas = ½ × 20 × 6 = 60 cm².'
+                    },
+                    // 10
+                    {
+                        type: 'jajar',
+                        question: '10. Luas kebun berbentuk jajar genjang adalah 360 m². Jika alasnya 24 m, berapa tinggi kebun tersebut?',
+                        options: ['12 m', '18 m', '20 m', '15 m'],
+                        correct: 3, // D
+                        explanation: 'Tinggi = Luas ÷ Alas = 360 ÷ 24 = 15 m.'
+                    },
+                    // 11
+                    {
+                        type: 'trapesium',
+                        trapShape: 'normal',
+                        question: '11. Sebuah trapesium memiliki luas 90 cm² dan tinggi 9 cm. Salah satu sisi sejajarnya 8 cm. Berapakah panjang sisi sejajar yang lain?',
+                        options: ['12 cm', '10 cm', '14 cm', '16 cm'],
+                        correct: 0, // A
+                        explanation: 'Jumlah Sisi Sejajar = (2 × 90) ÷ 9 = 20 cm. Sisi lain = 20 - 8 = 12 cm.'
+                    },
+                    // 12
+                    {
+                        type: 'jajar',
+                        question: '12. Diketahui jajar genjang dengan alas 16 cm dan tinggi 10 cm. Berapakah luasnya?',
+                        options: ['160 cm²', '80 cm²', '120 cm²', '180 cm²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 16 × 10 = 160 cm².'
+                    },
+                    // 13
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '13. Panjang sisi-sisi sejajar trapesium siku-siku adalah 14 cm dan 18 cm. Jika tingginya 10 cm, berapakah luasnya?',
+                        options: ['320 cm²', '160 cm²', '140 cm²', '180 cm²'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = 14 + 18 = 32 cm. Luas = ½ × 32 × 10 = 160 cm².'
+                    },
+                    // 14
+                    {
+                        type: 'jajar',
+                        question: '14. Luas jajar genjang adalah 225 cm² dan alasnya 15 cm. Tingginya adalah...',
+                        options: ['10 cm', '20 cm', '15 cm', '12 cm'],
+                        correct: 2, // C
+                        explanation: 'Tinggi = Luas ÷ Alas = 225 ÷ 15 = 15 cm.'
+                    },
+                    // 15
+                    {
+                        type: 'trapesium',
+                        trapShape: 'terbalik',
+                        question: '15. Luas trapesium adalah 100 cm². Jika sisi sejajarnya 6 cm dan 14 cm, berapakah tingginya?',
+                        options: ['5 cm', '8 cm', '12 cm', '10 cm'],
+                        correct: 3, // D
+                        explanation: 'Jumlah Sisi Sejajar = 6 + 14 = 20 cm. Tinggi = (2 × 100) ÷ 20 = 200 ÷ 20 = 10 cm.'
+                    },
+                    // 16
+                    {
+                        type: 'jajar',
+                        question: '16. Sebuah taplak meja berbentuk jajar genjang berukuran alas 25 cm dan tinggi 12 cm. Berapa luas taplak meja?',
+                        options: ['300 cm²', '150 cm²', '250 cm²', '350 cm²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 25 × 12 = 300 cm².'
+                    },
+                    // 17
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '17. Sebuah wadah berbentuk trapesium siku-siku memiliki luas 140 cm² dan tinggi 7 cm. Berapakah jumlah panjang sisi sejajarnya?',
+                        options: ['20 cm', '40 cm', '30 cm', '50 cm'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = (2 × 140) ÷ 7 = 280 ÷ 7 = 40 cm.'
+                    },
+                    // 18
+                    {
+                        type: 'jajar',
+                        question: '18. Jika luas jajar genjang adalah 144 cm² dan tingginya 9 cm, berapakah panjang alasnya?',
+                        options: ['12 cm', '18 cm', '16 cm', '14 cm'],
+                        correct: 2, // C
+                        explanation: 'Alas = Luas ÷ Tinggi = 144 ÷ 9 = 16 cm.'
+                    },
+                    // 19
+                    {
+                        type: 'trapesium',
+                        trapShape: 'normal',
+                        question: '19. Trapesium dengan sisi sejajar 15 cm dan 25 cm memiliki tinggi 12 cm. Berapakah luas trapesium tersebut?',
+                        options: ['480 cm²', '300 cm²', '200 cm²', '240 cm²'],
+                        correct: 3, // D
+                        explanation: 'Jumlah Sisi Sejajar = 15 + 25 = 40 cm. Luas = ½ × 40 × 12 = 240 cm².'
+                    },
+                    // 20
+                    {
+                        type: 'jajar',
+                        question: '20. Alas sebuah jajar genjang adalah 18 cm dan tingginya 10 cm. Luas jajar genjang adalah...',
+                        options: ['180 cm²', '90 cm²', '200 cm²', '160 cm²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 18 × 10 = 180 cm².'
+                    },
+                    // 21
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '21. Sebuah trapesium siku-siku mempunyai luas 180 cm². Jika panjang sisi sejajarnya 12 cm dan 24 cm, berapakah tingginya?',
+                        options: ['12 cm', '10 cm', '8 cm', '15 cm'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = 12 + 24 = 36 cm. Tinggi = (2 × 180) ÷ 36 = 360 ÷ 36 = 10 cm.'
+                    },
+                    // 22
+                    {
+                        type: 'jajar',
+                        question: '22. Luas jajar genjang 200 cm² dan panjang alasnya 20 cm. Berapakah tinggi jajar genjang tsb?',
+                        options: ['15 cm', '8 cm', '10 cm', '12 cm'],
+                        correct: 2, // C
+                        explanation: 'Tinggi = Luas ÷ Alas = 200 ÷ 20 = 10 cm.'
+                    },
+                    // 23
+                    {
+                        type: 'trapesium',
+                        trapShape: 'terbalik',
+                        question: '23. Sisi sejajar trapesium 7 cm dan 13 cm, serta tinggi 8 cm. Luas trapesium adalah...',
+                        options: ['160 cm²', '100 cm²', '70 cm²', '80 cm²'],
+                        correct: 3, // D
+                        explanation: 'Jumlah Sisi Sejajar = 7 + 13 = 20 cm. Luas = ½ × 20 × 8 = 80 cm².'
+                    },
+                    // 24
+                    {
+                        type: 'jajar',
+                        question: '24. Kebun jajar genjang berukuran alas 30 m dan tinggi 15 m. Berapakah luas kebun?',
+                        options: ['450 m²', '225 m²', '300 m²', '500 m²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 30 × 15 = 450 m².'
+                    },
+                    // 25
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '25. Luas trapesium siku-siku 210 cm² dan tingginya 14 cm. Berapakah jumlah panjang sisi sejajarnya?',
+                        options: ['25 cm', '30 cm', '35 cm', '20 cm'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = (2 × 210) ÷ 14 = 420 ÷ 14 = 30 cm.'
+                    },
+                    // 26
+                    {
+                        type: 'jajar',
+                        question: '26. Luas jajar genjang 135 cm² dan tinggi 9 cm. Panjang alasnya adalah...',
+                        options: ['12 cm', '18 cm', '15 cm', '20 cm'],
+                        correct: 2, // C
+                        explanation: 'Alas = Luas ÷ Tinggi = 135 ÷ 9 = 15 cm.'
+                    },
+                    // 27
+                    {
+                        type: 'trapesium',
+                        trapShape: 'normal',
+                        question: '27. Sisi sejajar trapesium 9 cm dan 11 cm, tingginya 10 cm. Berapakah luas trapesium?',
+                        options: ['200 cm²', '90 cm²', '120 cm²', '100 cm²'],
+                        correct: 3, // D
+                        explanation: 'Jumlah Sisi Sejajar = 9 + 11 = 20 cm. Luas = ½ × 20 × 10 = 100 cm².'
+                    },
+                    // 28
+                    {
+                        type: 'jajar',
+                        question: '28. Jajar genjang berukuran alas 14 cm dan tinggi 11 cm. Luasnya adalah...',
+                        options: ['154 cm²', '77 cm²', '140 cm²', '160 cm²'],
+                        correct: 0, // A
+                        explanation: 'Luas = Alas × Tinggi = 14 × 11 = 154 cm².'
+                    },
+                    // 29
+                    {
+                        type: 'trapesium',
+                        trapShape: 'siku',
+                        question: '29. Trapesium siku-siku memiliki luas 160 cm² dan tinggi 8 cm. Jika salah satu sisi sejajar 15 cm, berapa sisi sejajar lainnya?',
+                        options: ['20 cm', '25 cm', '30 cm', '10 cm'],
+                        correct: 1, // B
+                        explanation: 'Jumlah Sisi Sejajar = (2 × 160) ÷ 8 = 40 cm. Sisi sejajar lain = 40 - 15 = 25 cm.'
+                    },
+                    // 30
+                    {
+                        type: 'jajar',
+                        question: '30. Luas jajar genjang 280 cm² dan alasnya 20 cm. Tingginya adalah...',
+                        options: ['12 cm', '16 cm', '14 cm', '18 cm'],
+                        correct: 2, // C
+                        explanation: 'Tinggi = Luas ÷ Alas = 280 ÷ 20 = 14 cm.'
+                    }
+                ],
+
+                // Lifecycle Hook untuk restore data dari LocalStorage
+                init() {
+                    const savedAnswers = localStorage.getItem('sd_quiz_jajar_trapesium');
+                    if (savedAnswers) {
+                        try {
+                            this.userAnswers = JSON.parse(savedAnswers);
+                        } catch (e) {
+                            this.userAnswers = {};
+                        }
+                    }
+                },
+
+                // Getter Soal Aktif
+                get currentQuestion() {
+                    return this.questions[this.currentIndex];
+                },
+
+                // Cek apakah soal nomor ini sudah dijawab
+                get isCurrentAnswered() {
+                    return this.userAnswers.hasOwnProperty(this.currentIndex);
+                },
+
+                // Total Jawaban Terisi
+                get answeredCount() {
+                    return Object.keys(this.userAnswers).length;
+                },
+
+                // Menghitung Total Skor Real-time
+                get totalScore() {
+                    let score = 0;
+                    for (let idx in this.userAnswers) {
+                        if (this.userAnswers[idx] === this.questions[idx].correct) {
+                            score += 10; // Setiap soal bernilai 10 poin
+                        }
+                    }
+                    return score;
+                },
+
+                // Memilih Jawaban
+                selectAnswer(optIndex) {
+                    if (this.isCurrentAnswered) return;
+                    
+                    // Simpan jawaban
+                    this.userAnswers[this.currentIndex] = optIndex;
+                    
+                    // Save to LocalStorage
+                    localStorage.setItem('sd_quiz_jajar_trapesium', JSON.stringify(this.userAnswers));
+                },
+
+                // Pindah Soal
+                nextQuestion() {
+                    if (this.currentIndex < this.questions.length - 1) {
+                        this.currentIndex++;
+                    }
+                },
+                prevQuestion() {
+                    if (this.currentIndex > 0) {
+                        this.currentIndex--;
+                    }
+                },
+
+                // Dynamic Styling Opsi Jawaban
+                getOptionClass(optIdx) {
+                    if (!this.isCurrentAnswered) {
+                        return 'bg-white border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-800';
+                    }
+
+                    const selected = this.userAnswers[this.currentIndex];
+                    const correct = this.currentQuestion.correct;
+
+                    if (optIdx === correct) {
+                        return 'bg-emerald-100 border-emerald-500 text-emerald-900 font-bold';
+                    }
+                    if (optIdx === selected && selected !== correct) {
+                        return 'bg-rose-100 border-rose-500 text-rose-900 font-bold';
+                    }
+                    return 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+                },
+
+                // Dynamic Styling Tombol Grid Navigasi (1-30)
+                getGridButtonClass(index) {
+                    const isCurrent = this.currentIndex === index;
+                    const isAnswered = this.userAnswers.hasOwnProperty(index);
+                    const isCorrect = isAnswered && this.userAnswers[index] === this.questions[index].correct;
+
+                    if (isCurrent) {
+                        return 'bg-indigo-600 text-white font-black shadow-lg ring-4 ring-indigo-200 scale-105';
+                    }
+                    if (isAnswered) {
+                        return isCorrect 
+                            ? 'bg-emerald-500 text-white font-bold' 
+                            : 'bg-rose-500 text-white font-bold';
+                    }
+                    return 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold';
+                },
+
+                // Reset Kuis & Hapus LocalStorage
+                resetProgress() {
+                    if (confirm('Apakah kamu yakin ingin mengulang kuis dari awal?')) {
+                        this.userAnswers = {};
+                        this.currentIndex = 0;
+                        localStorage.removeItem('sd_quiz_jajar_trapesium');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
